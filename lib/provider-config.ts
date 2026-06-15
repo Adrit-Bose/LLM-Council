@@ -1,8 +1,7 @@
 /**
  * LLM provider configuration types.
  *
- * Default mode uses Cursor's models via @cursor/sdk (bills against Cursor subscription).
- * Custom mode lets users supply their own provider API key in the browser session.
+ * Users supply their own provider API key in the browser session.
  */
 
 export type ProviderMode = "cursor" | "custom";
@@ -10,7 +9,7 @@ export type ProviderMode = "cursor" | "custom";
 export type CustomProviderId = "openai" | "anthropic" | "gemini" | "groq";
 
 export interface ProviderSettings {
-  /** cursor = Cursor subscription (default, no UI key). custom = user-supplied key. */
+  /** custom = user-supplied API key (cursor kept for legacy session data). */
   mode: ProviderMode;
   /** Which external provider when mode is custom */
   customProvider?: CustomProviderId;
@@ -25,7 +24,8 @@ export interface ProviderSettings {
 }
 
 export const DEFAULT_PROVIDER_SETTINGS: ProviderSettings = {
-  mode: "cursor",
+  mode: "custom",
+  customProvider: "openai",
 };
 
 export const CUSTOM_PROVIDER_LABELS: Record<CustomProviderId, string> = {

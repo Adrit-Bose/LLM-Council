@@ -9,7 +9,6 @@ interface IdeaInputProps {
   defaultDebate?: boolean;
   providerSettings: ProviderSettings;
   providerError?: string | null;
-  onRevertProvider?: () => void;
 }
 
 export function IdeaInput({
@@ -18,7 +17,6 @@ export function IdeaInput({
   defaultDebate = false,
   providerSettings,
   providerError,
-  onRevertProvider,
 }: IdeaInputProps) {
   const [idea, setIdea] = useState("");
   const [enableDebate, setEnableDebate] = useState(defaultDebate);
@@ -39,23 +37,14 @@ export function IdeaInput({
 
       <form onSubmit={handleSubmit} className="space-y-4">
         {providerError && (
-          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 space-y-2">
+          <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
             <p>⚠️ {providerError}</p>
-            {onRevertProvider && (
-              <button
-                type="button"
-                onClick={onRevertProvider}
-                className="text-xs underline hover:text-red-300"
-              >
-                Switch back to Cursor default
-              </button>
-            )}
           </div>
         )}
 
-        {providerSettings.mode === "custom" && !providerSettings.apiKey?.trim() && (
+        {!providerSettings.apiKey?.trim() && (
           <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
-            Custom mode selected — enter an API key in LLM settings above.
+            Enter an API key in LLM settings above to convene the council.
           </p>
         )}
 
@@ -93,7 +82,7 @@ export function IdeaInput({
             disabled={
               !idea.trim() ||
               isRunning ||
-              (providerSettings.mode === "custom" && !providerSettings.apiKey?.trim())
+              !providerSettings.apiKey?.trim()
             }
             className="px-6 py-2.5 bg-council-accent hover:bg-council-accentHover text-white text-sm
                        font-medium rounded-xl transition disabled:opacity-40 disabled:cursor-not-allowed

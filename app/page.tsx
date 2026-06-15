@@ -16,7 +16,6 @@ import { FinalReport } from "@/components/FinalReport";
 import { IdeaInput } from "@/components/IdeaInput";
 import { ProviderSettingsPanel, useProviderSettings } from "@/components/ProviderSettings";
 import { useCouncilReveal } from "@/hooks/useCouncilReveal";
-import { clearCustomApiKey } from "@/lib/client-provider-settings";
 
 function createInitialMembers(): MemberState[] {
   return COUNCIL_MEMBERS.map((m) => ({
@@ -204,9 +203,7 @@ export default function Home() {
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Connection failed";
-      setProviderError(
-        providerSettings.mode === "custom" ? message : null
-      );
+      setProviderError(message);
       setState((prev) => ({
         ...prev,
         isRunning: false,
@@ -214,12 +211,6 @@ export default function Home() {
         chairmanError: message,
       }));
     }
-  };
-
-  const handleRevertProvider = () => {
-    const reset = clearCustomApiKey();
-    updateSettings(reset);
-    setProviderError(null);
   };
 
   const showCouncil =
@@ -268,9 +259,6 @@ export default function Home() {
           defaultDebate={state.enableDebate}
           providerSettings={providerSettings}
           providerError={providerError}
-          onRevertProvider={
-            providerSettings.mode === "custom" ? handleRevertProvider : undefined
-          }
         />
 
         {showCouncil && (

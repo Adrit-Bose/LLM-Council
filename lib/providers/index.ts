@@ -30,7 +30,7 @@ export async function callLLM<T extends z.ZodType>(
 
   if (!settings.apiKey?.trim()) {
     throw new Error(
-      "Custom provider requires an API key. Enter your key in Settings or switch back to Cursor default."
+      "Custom provider requires an API key. Enter your key in LLM settings."
     );
   }
 
