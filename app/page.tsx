@@ -1,6 +1,9 @@
 "use client";
 
+import { AppHeader } from "@/components/AppHeader";
+import { useAuth } from "@/components/AuthProvider";
 import { COUNCIL_MEMBERS } from "@/lib/council-members";
+import { saveCouncilRun } from "@/lib/history";
 import type {
   ChairmanReport,
   CouncilSessionState,
@@ -9,7 +12,7 @@ import type {
   MemberState,
   SSEEvent,
 } from "@/lib/types";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ChairmanQA } from "@/components/ChairmanQA";
 import { CouncilGrid } from "@/components/CouncilGrid";
 import { FinalReport } from "@/components/FinalReport";
@@ -45,9 +48,13 @@ const INITIAL_STATE: CouncilSessionState = {
 };
 
 export default function Home() {
+  const { user } = useAuth();
   const [state, setState] = useState<CouncilSessionState>(INITIAL_STATE);
   const { settings: providerSettings, updateSettings } = useProviderSettings();
   const [providerError, setProviderError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const savedRunRef = useRef(false);
+  const sessionIdRef = useRef(0);
 
   const updateMember = useCallback(
     (memberId: string, patch: Partial<MemberState>) => {
@@ -77,7 +84,6 @@ export default function Home() {
           break;
 
         case "member_stream":
-          // Buffer only — orchestration reveals parsed results, not raw tokens
           if (event.memberId) {
             updateMember(event.memberId, { status: "loading" });
           }
@@ -156,6 +162,10 @@ export default function Home() {
 
   const runCouncil = async (idea: string, enableDebate: boolean) => {
     setProviderError(null);
+    setHistoryError(null);
+    savedRunRef.current = false;
+    sessionIdRef.current += 1;
+
     setState({
       ...INITIAL_STATE,
       idea,
@@ -213,6 +223,28 @@ export default function Home() {
     }
   };
 
+  useEffect(() => {
+    if (!state.isComplete || !state.report || !user || savedRunRef.current) {
+      return;
+    }
+
+    savedRunRef.current = true;
+    const sessionId = sessionIdRef.current;
+
+    saveCouncilRun(user.id, state)
+      .then(() => {
+        if (sessionId !== sessionIdRef.current) return;
+        setHistoryError(null);
+      })
+      .catch((err) => {
+        if (sessionId !== sessionIdRef.current) return;
+        savedRunRef.current = false;
+        setHistoryError(
+          err instanceof Error ? err.message : "Failed to save to history"
+        );
+      });
+  }, [state.isComplete, state.report, user, state]);
+
   const showCouncil =
     state.isRunning ||
     state.isComplete ||
@@ -231,20 +263,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen">
-      {/* Header */}
-      <header className="border-b border-council-border bg-council-surface/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center gap-3">
-          <span className="text-2xl">🏛️</span>
-          <div>
-            <h1 className="font-display text-xl font-bold tracking-tight">
-              LLM Council
-            </h1>
-            <p className="text-xs text-council-muted">
-              Multi-perspective idea evaluation
-            </p>
-          </div>
-        </div>
-      </header>
+      <AppHeader />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-8">
         <ProviderSettingsPanel
@@ -260,6 +279,12 @@ export default function Home() {
           providerSettings={providerSettings}
           providerError={providerError}
         />
+
+        {historyError && (
+          <p className="text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
+            Council completed but could not save to history: {historyError}
+          </p>
+        )}
 
         {showCouncil && (
           <>

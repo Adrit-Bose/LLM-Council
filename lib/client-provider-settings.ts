@@ -5,6 +5,8 @@ import { DEFAULT_PROVIDER_SETTINGS } from "@/lib/provider-config";
 
 const STORAGE_KEY = "llm-council-provider-settings";
 
+// API keys are session-only (sessionStorage) — never persisted to Postgres.
+
 function normalizeSettings(settings: ProviderSettings): ProviderSettings {
   if (settings.mode === "cursor") {
     return {

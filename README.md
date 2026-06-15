@@ -34,20 +34,36 @@ You can also override member and chairman models per provider in LLM settings. A
 
 ```bash
 npm install
-cp .env.example .env.local   # optional — only for server-side model overrides
+cp .env.example .env.local
+```
+
+Add your Supabase URL and anon key to `.env.local`, then run the SQL in `supabase/schema.sql` in the Supabase SQL editor.
+
+Enable **Email** auth and (optionally) **Google** OAuth in Supabase Dashboard → Authentication → Providers. For Google, add redirect URL `http://localhost:3000/auth/callback`.
+
+```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), open **LLM settings**, choose a provider, and enter your API key.
+Open [http://localhost:3000](http://localhost:3000), sign in, open **LLM settings**, choose a provider, and enter your API key.
 
-## Environment Variables (server-side)
+## Authentication & History
 
-Provider API keys are **not** set via env — users enter them in the UI. Optional server-side overrides:
+- **Sign in** with email/password or Google OAuth (`/login`).
+- The council tool is gated behind login; sessions persist across refresh via Supabase Auth.
+- Completed council runs are saved to Postgres (`council_runs`) and listed under **History**.
+- **Account** shows your email and sign-out; API keys are never stored in the database.
+
+## Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
+| `NEXT_PUBLIC_SUPABASE_URL` | Yes | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Yes | Supabase anon (public) key |
 | `DEFAULT_MODEL` | No | Fallback member model for custom providers |
 | `CHAIRMAN_MODEL` | No | Chairman model override for custom providers |
+
+Provider API keys are **not** set via env — users enter them in the UI (session only).
 
 ## Customizing Council Members
 
@@ -70,12 +86,18 @@ Edit model defaults in `lib/provider-config.ts`.
 ## Architecture
 
 ```
-app/page.tsx                    # UI + provider settings (sessionStorage)
-app/api/council/route.ts        # SSE endpoint, receives provider per request
-components/ProviderSettings.tsx # Provider, API key, and model settings
+app/page.tsx                    # Council UI (auth required)
+app/login/page.tsx              # Sign in / sign up
+app/account/page.tsx            # Account panel
+app/history/                    # Saved runs list + detail
+app/auth/callback/route.ts      # OAuth callback
+middleware.ts                   # Session refresh + auth gate
+lib/supabase/                   # Supabase browser/server clients
+lib/history.ts                  # Save/load/delete council runs
+supabase/schema.sql             # Postgres table + RLS policies
+app/api/council/route.ts        # SSE endpoint
+components/ProviderSettings.tsx # Provider + API key (session only)
 lib/council-runner.ts           # Parallel → debate → chairman
-lib/providers/                  # Provider implementations
-lib/council-members.ts          # Personas and prompts
 ```
 
 ## Production Build
