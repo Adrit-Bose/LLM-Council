@@ -4,23 +4,18 @@ Evaluate business ideas through six distinct AI perspectives, then receive a syn
 
 ## LLM Provider Strategy
 
-- Run `npm run dev` from Cursor's integrated terminal
-- Optionally add `CURSOR_API_KEY` to `.env.local` once (from [Cursor Dashboard → Integrations](https://cursor.com/dashboard/integrations)) — this is server-side only, never committed
-- Each council session bills against your **Cursor subscription / API usage**
+Council runs use **your own API key**, entered in **LLM settings** on the home page. Keys are stored in **sessionStorage** only — never hardcoded, never committed, never sent to disk.
 
-The UI shows **"Cursor (default)"** when this mode is active.
-
-### Custom: Your own provider (optional)
-
-Open **LLM settings** to switch to a custom provider:
+Supported providers:
 
 | Provider | API key source |
 |----------|----------------|
 | OpenAI | User enters key in UI (session only) |
 | Anthropic | User enters key in UI (session only) |
 | Google Gemini | User enters key in UI (session only) |
+| Groq | User enters key in UI (session only) |
 
-Custom keys are stored in **sessionStorage** only — never hardcoded, never committed. If a custom key fails, use **"Revert to Cursor default"** without losing your idea text.
+You can also override member and chairman models per provider in LLM settings. An API key is required before you can convene the council.
 
 ## How It Works
 
@@ -39,24 +34,20 @@ Custom keys are stored in **sessionStorage** only — never hardcoded, never com
 
 ```bash
 npm install
-cp .env.example .env.local
-# Optional: add CURSOR_API_KEY to .env.local for Cursor default mode
+cp .env.example .env.local   # optional — only for server-side model overrides
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:3000](http://localhost:3000), open **LLM settings**, choose a provider, and enter your API key.
 
 ## Environment Variables (server-side)
 
+Provider API keys are **not** set via env — users enter them in the UI. Optional server-side overrides:
+
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `CURSOR_API_KEY` | No* | Cursor API key for default mode (*recommended for reliable auth) |
-| `CURSOR_DEFAULT_MODEL` | No | Model for council members (default: `auto`) |
-| `CURSOR_CHAIRMAN_MODEL` | No | Model for Chairman (default: `auto`) |
-| `DEFAULT_MODEL` | No | Fallback for custom OpenAI-compatible mode |
-| `CHAIRMAN_MODEL` | No | Chairman model override for custom mode |
-
-Custom provider API keys are **not** set via env — users enter them in the UI.
+| `DEFAULT_MODEL` | No | Fallback member model for custom providers |
+| `CHAIRMAN_MODEL` | No | Chairman model override for custom providers |
 
 ## Customizing Council Members
 
@@ -71,8 +62,7 @@ Edit model defaults in `lib/provider-config.ts`.
 
 | File | Purpose |
 |------|---------|
-| `lib/providers/cursor.ts` | Cursor SDK (default) |
-| `lib/providers/openai.ts` | OpenAI / compatible APIs |
+| `lib/providers/openai.ts` | OpenAI, Groq, and other compatible APIs |
 | `lib/providers/anthropic.ts` | Anthropic Claude |
 | `lib/providers/gemini.ts` | Google Gemini |
 | `lib/provider-config.ts` | Model defaults and labels |
@@ -82,8 +72,7 @@ Edit model defaults in `lib/provider-config.ts`.
 ```
 app/page.tsx                    # UI + provider settings (sessionStorage)
 app/api/council/route.ts        # SSE endpoint, receives provider per request
-app/api/provider/status/route.ts
-components/ProviderSettings.tsx # Cursor default vs Custom toggle
+components/ProviderSettings.tsx # Provider, API key, and model settings
 lib/council-runner.ts           # Parallel → debate → chairman
 lib/providers/                  # Provider implementations
 lib/council-members.ts          # Personas and prompts
