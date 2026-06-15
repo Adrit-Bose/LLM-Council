@@ -4,10 +4,6 @@ Evaluate business ideas through six distinct AI perspectives, then receive a syn
 
 ## LLM Provider Strategy
 
-### Default: Cursor (zero UI setup)
-
-By default, the app uses **Cursor's models** via the Cursor SDK. You do **not** enter any API key in the app UI.
-
 - Run `npm run dev` from Cursor's integrated terminal
 - Optionally add `CURSOR_API_KEY` to `.env.local` once (from [Cursor Dashboard → Integrations](https://cursor.com/dashboard/integrations)) — this is server-side only, never committed
 - Each council session bills against your **Cursor subscription / API usage**
